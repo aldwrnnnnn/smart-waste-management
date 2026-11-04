@@ -1,0 +1,202 @@
+@extends('layouts.app')
+
+@section('title', 'Daftar Akun Pelapor - Smart Management System')
+
+@section('content')
+<main class="min-h-[100dvh] w-full bg-[#EBF2ED] flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <!-- Card Utama (Sesuai Sketsa: Kartu 2-Panel Terbagi dengan Lengkungan Organik S-Curve) -->
+    <div class="relative w-full max-w-md md:max-w-3xl lg:max-w-[820px] rounded-[24px] sm:rounded-[28px] overflow-hidden border-2 border-[#758C7D] bg-white shadow-xl shadow-forest-950/10 md:min-h-[500px] flex flex-col md:flex-row">
+
+        <!-- Lapisan Latar Belakang SVG S-Curve (Desktop >= 768px) -->
+        <div class="hidden md:block absolute inset-y-0 left-0 w-[46%] pointer-events-none z-0">
+            <svg class="w-full h-full text-forest-900 fill-current" viewBox="0 0 500 1000" preserveAspectRatio="none" aria-hidden="true">
+                <!-- Bidang hijau panel kiri dengan lengkungan S-curve pada batas kanan -->
+                <path d="M 0,0 L 475,0 C 455,180 460,340 475,480 C 495,640 500,820 485,940 L 475,1000 L 0,1000 Z" />
+                <!-- Garis pembatas melengkung sesuai garis pena pada sketsa -->
+                <path d="M 475,0 C 455,180 460,340 475,480 C 495,640 500,820 485,940 L 475,1000" fill="none" stroke="#758C7D" stroke-width="2.5" vector-effect="non-scaling-stroke" />
+            </svg>
+        </div>
+
+        <!-- Lapisan Latar Belakang Wave (Mobile < 768px) -->
+        <div class="md:hidden absolute inset-x-0 top-0 h-[280px] pointer-events-none z-0">
+            <svg class="w-full h-full text-forest-900 fill-current" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M 0,0 L 1000,0 L 1000,340 Q 500,410 0,340 Z" />
+                <path d="M 0,340 Q 500,410 1000,340" fill="none" stroke="#758C7D" stroke-width="2.5" vector-effect="non-scaling-stroke" />
+            </svg>
+        </div>
+
+        <!-- Panel Kiri: Identitas Visual & Informasi Registrasi -->
+        <section
+            aria-label="Informasi Pendaftaran Smart Management System"
+            class="relative z-10 w-full md:w-[46%] text-white p-5 sm:p-6 lg:p-7 flex flex-col justify-between"
+        >
+            <div class="flex flex-col items-center text-center my-auto py-1">
+                <!-- Medali Logo Lingkaran -->
+                <div
+                    class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-forest-800 border-2 border-[#A7C4B5] shadow-md flex items-center justify-center select-none shrink-0 overflow-hidden"
+                    aria-label="Logo Smart Management System"
+                >
+                    @if(file_exists(public_path('images/logo.png')))
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo Smart Waste" class="w-full h-full object-cover">
+                    @else
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="w-6 h-6 text-[#D5E0D8] mb-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-4.97 0-9 4.03-9 9 0 4.17 2.84 7.67 6.69 8.69L12 21l2.31-.31C18.16 19.67 21 16.17 21 12c0-4.97-4.03-9-9-9zm0 0v18m0-12l4 4m-4-4L8 13"/>
+                            </svg>
+                            <span class="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#D5E0D8]">[LOGO]</span>
+                        </div>
+                    @endif
+                </div>
+
+                <h1 class="mt-3 text-lg sm:text-xl font-bold tracking-tight text-white leading-snug">
+                    Smart Management System
+                </h1>
+
+                <p class="mt-2 text-xs sm:text-sm text-[#D5E0D8] leading-relaxed max-w-xs">
+                    Daftarkan akun warga pelapor untuk mengunggah temuan sampah di sekitar Anda, mendapatkan hasil deteksi otomatis, dan memantau status tindak lanjut petugas kebersihan.
+                </p>
+
+                <!-- Tag Kategori Klasifikasi Sampah -->
+                <div class="mt-3.5 flex flex-wrap items-center justify-center gap-1.5">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-forest-950/80 border border-[#A7C4B5]/40 text-[11px] font-medium text-[#D5E0D8]">
+                        <svg class="w-3 h-3 text-[#A7C4B5]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Organik
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-forest-950/80 border border-[#A7C4B5]/40 text-[11px] font-medium text-[#D5E0D8]">
+                        <svg class="w-3 h-3 text-[#A7C4B5]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Plastik
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-forest-950/80 border border-[#A7C4B5]/40 text-[11px] font-medium text-[#D5E0D8]">
+                        <svg class="w-3 h-3 text-[#A7C4B5]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Kertas
+                    </span>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-2.5 border-t border-[#A7C4B5]/25 text-[11px] text-[#D5E0D8] space-y-0.5">
+                <div class="font-semibold text-white">Alur Pelaporan Sampah:</div>
+                <div>1. Ambil foto temuan sampah di lokasi</div>
+                <div>2. Sistem mengklasifikasikan jenis sampah</div>
+                <div>3. Petugas menindaklanjuti pengangkutan</div>
+            </div>
+        </section>
+
+        <!-- Panel Kanan: Formulir Registrasi -->
+        <section
+            aria-labelledby="registerHeading"
+            class="relative z-10 w-full md:w-[54%] text-ink p-5 sm:p-7 lg:p-9 flex flex-col justify-center bg-white md:bg-transparent"
+        >
+            <div class="w-full max-w-sm mx-auto">
+                <header class="text-center">
+                    <h2 id="registerHeading" class="text-xl sm:text-2xl font-bold text-ink tracking-tight">
+                        Buat Akun Pelapor
+                    </h2>
+                    <p class="mt-1 text-xs sm:text-sm text-ink-muted">
+                        Lengkapi formulir berikut untuk membuat akun baru
+                    </p>
+                </header>
+
+                @if($errors->any())
+                    <div role="alert" class="mt-3.5 rounded-lg bg-[#FEE2E2] border border-[#B91C1C] px-3.5 py-2.5 text-xs sm:text-sm text-[#7F1D1D] flex items-start gap-2">
+                        <svg class="w-4 h-4 shrink-0 mt-0.5 text-[#7F1D1D]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm9-3.75a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <ul class="list-disc list-inside space-y-0.5">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <form id="registerForm" method="POST" action="{{ route('register.submit') }}" class="mt-4 space-y-3">
+                    @csrf
+
+                    <div>
+                        <label for="name" class="block text-xs font-semibold text-ink mb-1">Nama Lengkap</label>
+                        <input
+                            id="name"
+                            name="name"
+                            type="text"
+                            value="{{ old('name') }}"
+                            required
+                            autocomplete="name"
+                            placeholder="Nama lengkap Anda"
+                            class="w-full px-3 py-2 min-h-[40px] rounded-lg border border-[#758C7D] bg-[#F4F7F4] text-ink placeholder:text-[#5C7063] text-xs sm:text-sm transition-colors focus:bg-white focus:border-forest-700"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="email" class="block text-xs font-semibold text-ink mb-1">Alamat Email</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value="{{ old('email') }}"
+                            required
+                            autocomplete="email"
+                            placeholder="email@example.com"
+                            class="w-full px-3 py-2 min-h-[40px] rounded-lg border border-[#758C7D] bg-[#F4F7F4] text-ink placeholder:text-[#5C7063] text-xs sm:text-sm transition-colors focus:bg-white focus:border-forest-700"
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="password" class="block text-xs font-semibold text-ink mb-1">Kata Sandi</label>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                autocomplete="new-password"
+                                placeholder="Min. 6 karakter"
+                                class="w-full px-3 py-2 min-h-[40px] rounded-lg border border-[#758C7D] bg-[#F4F7F4] text-ink placeholder:text-[#5C7063] text-xs sm:text-sm transition-colors focus:bg-white focus:border-forest-700"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="password_confirmation" class="block text-xs font-semibold text-ink mb-1">Ulangi Sandi</label>
+                            <input
+                                id="password_confirmation"
+                                name="password_confirmation"
+                                type="password"
+                                required
+                                autocomplete="new-password"
+                                placeholder="Konfirmasi sandi"
+                                class="w-full px-3 py-2 min-h-[40px] rounded-lg border border-[#758C7D] bg-[#F4F7F4] text-ink placeholder:text-[#5C7063] text-xs sm:text-sm transition-colors focus:bg-white focus:border-forest-700"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="pt-1 flex justify-center">
+                        <button
+                            type="submit"
+                            id="registerSubmitBtn"
+                            class="min-w-[170px] min-h-[42px] px-6 py-2 rounded-lg bg-forest-700 hover:bg-forest-800 active:bg-forest-900 text-white font-semibold text-xs sm:text-sm shadow-sm hover:shadow transition-all inline-flex items-center justify-center gap-2"
+                        >
+                            <span id="registerBtnLabel">Daftar & Masuk</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-3.5 text-center text-xs sm:text-sm text-ink-muted flex flex-wrap items-center justify-center gap-1">
+                    <span>Sudah memiliki akun?</span>
+                    <a
+                        href="{{ route('login') }}"
+                        class="inline-flex items-center px-1 min-h-[36px] font-semibold text-forest-700 underline underline-offset-4 hover:text-forest-900 transition-colors"
+                    >
+                        Masuk di sini
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+@endsection

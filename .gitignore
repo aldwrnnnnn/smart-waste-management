@@ -1,0 +1,157 @@
+# =============================================================================
+# Root .gitignore - Smart Waste Management System (Monorepo)
+# Stack: Laravel (web-backend), FastAPI + TensorFlow (ml-service), Flutter (mobile-app)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. OS & Editor Files
+# -----------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# -----------------------------------------------------------------------------
+# 2. Environment & Secrets (Global & Subprojects)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+
+# -----------------------------------------------------------------------------
+# 3. Laravel Website & Main Backend (web-backend/)
+# -----------------------------------------------------------------------------
+**/node_modules/
+**/vendor/
+web-backend/public/hot
+web-backend/public/storage
+web-backend/public/build/
+web-backend/storage/*.key
+web-backend/storage/app/public/reports/*
+!web-backend/storage/app/public/reports/.gitkeep
+web-backend/storage/framework/cache/*
+!web-backend/storage/framework/cache/.gitkeep
+web-backend/storage/framework/sessions/*
+!web-backend/storage/framework/sessions/.gitkeep
+web-backend/storage/framework/testing/*
+!web-backend/storage/framework/testing/.gitkeep
+web-backend/storage/framework/views/*
+!web-backend/storage/framework/views/.gitkeep
+web-backend/storage/logs/*.log
+web-backend/bootstrap/cache/*.php
+*.sqlite
+*.sqlite3
+.phpunit.result.cache
+.phpactor.json
+Homestead.json
+Homestead.yaml
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -----------------------------------------------------------------------------
+# 4. Python, TensorFlow/Keras & FastAPI (ml-service/)
+# -----------------------------------------------------------------------------
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+ml-service/.venv/
+ml-service/venv/
+ml-service/env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Catatan Model ML:
+# Secara default, model hasil akhir di dalam ml-service/ tetap di-track agar siap digunakan.
+# Jika ada checkpoint sementara selama training, abaikan file checkpoint sementara:
+ml-service/**/checkpoints/
+ml-service/**/logs/
+ml-service/**/tensorboard/
+ml-service/**/temp_*
+ml-service/**/*.tmp
+
+# Pastikan model utama (.keras, .h5, .tflite) dan label mapping tetap bisa di-commit:
+!ml-service/**/*.keras
+!ml-service/**/*.h5
+!ml-service/**/*.tflite
+!ml-service/**/class_indices.json
+!ml-service/**/labels.txt
+
+# -----------------------------------------------------------------------------
+# 5. Flutter Mobile App (mobile-app/)
+# -----------------------------------------------------------------------------
+mobile-app/.dart_tool/
+mobile-app/.packages
+mobile-app/.pub-cache/
+mobile-app/.pub/
+mobile-app/build/
+mobile-app/.flutter-plugins
+mobile-app/.flutter-plugins-dependencies
+mobile-app/.metadata
+mobile-app/coverage/
+mobile-app/**/generated_plugin_registrant.dart
+mobile-app/android/.gradle/
+mobile-app/android/captures/
+mobile-app/android/gradlew
+mobile-app/android/gradlew.bat
+mobile-app/android/local.properties
+mobile-app/android/**/GeneratedPluginRegistrant.java
+mobile-app/android/key.properties
+mobile-app/**/*.jks
+mobile-app/**/*.keystore
+mobile-app/ios/Pods/
+mobile-app/ios/.symlinks/
+mobile-app/ios/Flutter/Flutter.framework
+mobile-app/ios/Flutter/Flutter.podspec
+mobile-app/ios/Flutter/Generated.xcconfig
+mobile-app/ios/Flutter/ephemeral/
+mobile-app/ios/Runner/GeneratedPluginRegistrant.*
+
+# -----------------------------------------------------------------------------
+# 6. Dokumentasi & Hasil Evaluasi Model (docs/)
+# -----------------------------------------------------------------------------
+# Pastikan seluruh dokumen arsitektur, grafik evaluasi (confusion matrix, accuracy/loss plot),
+# dan laporan metrik di dalam folder docs/ selalu ter-track oleh Git:
+!docs/**
+!docs/**/*.md
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.svg
+!docs/**/*.json
+!docs/**/*.csv
+!docs/**/*.pdf
+
+# -----------------------------------------------------------------------------
+# 7. Pengaturan Dataset (dataset/)
+# -----------------------------------------------------------------------------
+# Dataset klasifikasi sampah (450 gambar pada organic/, paper/, plastic/) tetap
+# di-track ke Git agar syarat pengumpulan dataset terpenuhi secara utuh.
+!dataset/**
+dataset/**/Thumbs.db
+dataset/**/.DS_Store

@@ -1,0 +1,15 @@
+Smart Waste Management System - Model Evaluation Report
+Model Architecture: MobileNetV2 (ImageNet Transfer Learning)
+Total Dataset: 450 images (Train: 360, Test: 90)
+Test Accuracy: 94.44% (0.9444)
+
+Classification Report:
+               precision    recall  f1-score   support
+
+Organic Waste     0.9667    0.9667    0.9667        30
+  Paper Waste     1.0000    0.8667    0.9286        30
+Plastic Waste     0.8824    1.0000    0.9375        30
+
+     accuracy                         0.9444        90
+    macro avg     0.9497    0.9444    0.9442        90
+ weighted avg     0.9497    0.9444    0.9442        90
