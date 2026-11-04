@@ -55,7 +55,7 @@
 
                 <!-- Deskripsi Sistem (Representasi Garis Gelombang pada Sketsa) -->
                 <p class="mt-2 text-xs sm:text-sm text-[#D5E0D8] leading-relaxed max-w-xs">
-                    Sistem pelaporan dan pemilahan temuan sampah terpadu berbasis citra MobileNetV2. Laporkan titik sampah di lingkungan Anda untuk dipilah otomatis dan dipantau pengangkutannya.
+                    Sistem pengelolaan sampah berbasis teknologi. Laporkan temuan sampah di lingkungan anda dan deteksi menggunakan AI.
                 </p>
 
                 <!-- Tag Kategori Klasifikasi Sampah -->

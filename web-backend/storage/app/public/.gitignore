@@ -1,2 +1,5 @@
 *
 !.gitignore
+!reports/
+!reports/.gitkeep
+!reports/sample_*.jpg

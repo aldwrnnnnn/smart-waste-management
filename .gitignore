@@ -40,6 +40,7 @@ web-backend/public/build/
 web-backend/storage/*.key
 web-backend/storage/app/public/reports/*
 !web-backend/storage/app/public/reports/.gitkeep
+!web-backend/storage/app/public/reports/sample_*.jpg
 web-backend/storage/framework/cache/*
 !web-backend/storage/framework/cache/.gitkeep
 web-backend/storage/framework/sessions/*
