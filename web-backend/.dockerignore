@@ -3,5 +3,6 @@
 .env.*
 node_modules
 vendor
+public/storage
 storage/logs/*.log
 tests
