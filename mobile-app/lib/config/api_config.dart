@@ -1,18 +1,12 @@
 class ApiConfig {
   ApiConfig._();
 
-  // Default URL untuk Android Emulator (10.0.2.2 mengarah ke localhost komputer host).
-  //
-  // PANDUAN PENGUJIAN DI HP FISIK (REAL DEVICE):
-  // 1. Pastikan komputer dan HP terhubung ke jaringan Wi-Fi / Hotspot yang sama.
-  // 2. Cek IPv4 komputer melalui terminal dengan perintah `ipconfig` (contoh: 192.168.1.10).
-  // 3. Jalankan server Laravel dengan host 0.0.0.0:
-  //    `php artisan serve --host=0.0.0.0 --port=8000`
-  // 4. Ubah nilai `baseUrl` di bawah menjadi:
-  //    `static const String baseUrl = 'http://192.168.1.10:8000/api';`
+  // kalo mau jalanin pake ip:
+  // php artisan serve --host=0.0.0.0 --port=8000
+  // trus ganti pake ip lu
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
+    defaultValue: 'https://prideful-lecturer-snap.ngrok-free.dev/api',
   );
 
   static String get hostBaseUrl {

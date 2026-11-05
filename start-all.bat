@@ -23,6 +23,5 @@ echo  1. FastAPI (Layanan AI Port 8001)
 echo  2. Laravel (Web & API Port 8000) - Akses lokal: http://127.0.0.1:8000
 echo  3. Ngrok Tunnel - Domain Tetap: https://prideful-lecturer-snap.ngrok-free.dev
 echo.
-echo Domain Anda sudah PERMANEN dan tidak akan berubah lagi!
 echo ========================================================
 pause
