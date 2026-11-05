@@ -10,18 +10,55 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 import keras
-from keras.initializers import GlorotUniform
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
-class CompatibleGlorotUniform(GlorotUniform):
-    def __init__(self, seed=None, input_axes=None, output_axes=None, **kwargs):
-        try:
-            super().__init__(seed=seed, input_axes=input_axes, output_axes=output_axes, **kwargs)
-        except TypeError:
-            super().__init__(seed=seed)
+
+def patch_keras_initializers() -> None:
+    """Monkey-patch Keras initializer classes to ignore input_axes/output_axes from newer Keras 3 versions."""
+    modules = []
+    try:
+        from keras import initializers
+        modules.append(initializers)
+    except Exception:
+        pass
+    try:
+        from tensorflow.keras import initializers as tf_init
+        modules.append(tf_init)
+    except Exception:
+        pass
+    try:
+        from keras.src.initializers import random_initializers
+        modules.append(random_initializers)
+    except Exception:
+        pass
+
+    for mod in modules:
+        for attr in dir(mod):
+            cls = getattr(mod, attr)
+            if isinstance(cls, type) and hasattr(cls, "__init__"):
+                orig_init = cls.__init__
+                if getattr(orig_init, "_is_patched", False):
+                    continue
+
+                def make_safe(orig):
+                    def safe_init(self, *args, **kwargs):
+                        kwargs.pop("input_axes", None)
+                        kwargs.pop("output_axes", None)
+                        return orig(self, *args, **kwargs)
+
+                    safe_init._is_patched = True
+                    return safe_init
+
+                try:
+                    cls.__init__ = make_safe(orig_init)
+                except Exception:
+                    pass
+
+
+patch_keras_initializers()
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "waste_classifier_model.keras"
@@ -65,11 +102,11 @@ async def lifespan(app: FastAPI):
     else:
         try:
             print("INFO: [Lifespan] Loading Keras model into memory...", flush=True)
-            custom_objects = {"GlorotUniform": CompatibleGlorotUniform}
+            patch_keras_initializers()
             try:
-                ml_state["model"] = keras.models.load_model(MODEL_PATH, custom_objects=custom_objects)
+                ml_state["model"] = keras.models.load_model(MODEL_PATH)
             except Exception:
-                ml_state["model"] = tf.keras.models.load_model(MODEL_PATH, custom_objects=custom_objects)
+                ml_state["model"] = tf.keras.models.load_model(MODEL_PATH)
             ml_state["load_error"] = None
             print("SUCCESS: [Lifespan] Model loaded successfully!", flush=True)
         except Exception as exc:
