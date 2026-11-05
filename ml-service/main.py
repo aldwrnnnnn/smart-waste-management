@@ -8,10 +8,20 @@ from typing import Any
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+import keras
+from keras.initializers import GlorotUniform
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
+class CompatibleGlorotUniform(GlorotUniform):
+    def __init__(self, seed=None, input_axes=None, output_axes=None, **kwargs):
+        try:
+            super().__init__(seed=seed, input_axes=input_axes, output_axes=output_axes, **kwargs)
+        except TypeError:
+            super().__init__(seed=seed)
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "waste_classifier_model.keras"
@@ -54,8 +64,12 @@ async def lifespan(app: FastAPI):
         ml_state["load_error"] = err_msg
     else:
         try:
-            print("INFO: [Lifespan] Loading TensorFlow Keras model into memory...", flush=True)
-            ml_state["model"] = tf.keras.models.load_model(MODEL_PATH)
+            print("INFO: [Lifespan] Loading Keras model into memory...", flush=True)
+            custom_objects = {"GlorotUniform": CompatibleGlorotUniform}
+            try:
+                ml_state["model"] = keras.models.load_model(MODEL_PATH, custom_objects=custom_objects)
+            except Exception:
+                ml_state["model"] = tf.keras.models.load_model(MODEL_PATH, custom_objects=custom_objects)
             ml_state["load_error"] = None
             print("SUCCESS: [Lifespan] Model loaded successfully!", flush=True)
         except Exception as exc:
@@ -111,6 +125,11 @@ def preprocess_uploaded_image(file_bytes: bytes) -> np.ndarray:
 
 def _run_inference(processed_tensor: np.ndarray) -> np.ndarray:
     return ml_state["model"].predict(processed_tensor, verbose=0)[0]
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health")
