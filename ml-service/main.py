@@ -30,6 +30,7 @@ DEFAULT_CLASSES = {
 ml_state: dict[str, Any] = {
     "model": None,
     "class_names": DEFAULT_CLASSES,
+    "load_error": None,
 }
 
 
@@ -42,12 +43,32 @@ def load_class_mapping() -> dict[int, str]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if not MODEL_PATH.exists():
-        raise RuntimeError(f"Trained model file not found at {MODEL_PATH}. Run train_model.py first.")
-    ml_state["model"] = tf.keras.models.load_model(MODEL_PATH)
+    print(f"INFO: [Lifespan] Starting up. BASE_DIR={BASE_DIR}", flush=True)
+    print(f"INFO: [Lifespan] Model file target={MODEL_PATH} (exists={MODEL_PATH.exists()})", flush=True)
+
     ml_state["class_names"] = load_class_mapping()
+
+    if not MODEL_PATH.exists():
+        err_msg = f"Model file not found at {MODEL_PATH}"
+        print(f"ERROR: [Lifespan] {err_msg}", flush=True)
+        ml_state["load_error"] = err_msg
+    else:
+        try:
+            print("INFO: [Lifespan] Loading TensorFlow Keras model into memory...", flush=True)
+            ml_state["model"] = tf.keras.models.load_model(MODEL_PATH)
+            ml_state["load_error"] = None
+            print("SUCCESS: [Lifespan] Model loaded successfully!", flush=True)
+        except Exception as exc:
+            import traceback
+            err_msg = f"Failed to load model: {exc}"
+            print(f"ERROR: [Lifespan] {err_msg}", flush=True)
+            traceback.print_exc()
+            ml_state["load_error"] = err_msg
+
     yield
+
     ml_state["model"] = None
+    print("INFO: [Lifespan] Shutdown complete.", flush=True)
 
 
 app = FastAPI(
@@ -98,6 +119,7 @@ async def health_check() -> dict[str, Any]:
     return {
         "status": "healthy" if model_loaded else "unhealthy",
         "model_loaded": model_loaded,
+        "load_error": ml_state.get("load_error"),
         "model_path": MODEL_PATH.name,
         "classes": list(ml_state["class_names"].values()),
     }
@@ -109,9 +131,10 @@ async def predict_waste(
     photo: UploadFile | None = File(default=None),
 ) -> dict[str, Any]:
     if ml_state["model"] is None:
+        err_msg = ml_state.get("load_error") or "Model is not loaded yet."
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model is not loaded yet.",
+            detail=f"Layanan AI belum siap: {err_msg}",
         )
 
     uploaded = file if hasattr(file, "read") else (photo if hasattr(photo, "read") else None)
