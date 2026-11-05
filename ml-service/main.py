@@ -13,6 +13,8 @@ import keras
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 import tensorflow as tf
+from tensorflow.keras import layers, models
+from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 
@@ -88,9 +90,29 @@ def load_class_mapping() -> dict[int, str]:
     return DEFAULT_CLASSES
 
 
+def build_classifier_model(num_classes: int = 3) -> tf.keras.Model:
+    base_model = MobileNetV2(
+        input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
+        include_top=False,
+        weights=None,
+    )
+    base_model.trainable = False
+
+    inputs = layers.Input(shape=(IMG_SIZE[0], IMG_SIZE[1], 3), name="input_image")
+    x = base_model(inputs, training=False)
+    x = layers.GlobalAveragePooling2D(name="global_avg_pool")(x)
+    x = layers.BatchNormalization(name="head_bn")(x)
+    x = layers.Dropout(0.3, name="head_dropout")(x)
+    x = layers.Dense(128, activation="relu", name="head_dense")(x)
+    x = layers.Dropout(0.2, name="head_dropout_2")(x)
+    outputs = layers.Dense(num_classes, activation="softmax", name="predictions")(x)
+
+    return models.Model(inputs=inputs, outputs=outputs, name="waste_classifier_mobilenetv2")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"INFO: [Lifespan] Starting up. BASE_DIR={BASE_DIR}", flush=True)
+    print(f"INFO: [Lifespan] Starting up v1.0.5. BASE_DIR={BASE_DIR}", flush=True)
     print(f"INFO: [Lifespan] Model file target={MODEL_PATH} (exists={MODEL_PATH.exists()})", flush=True)
 
     ml_state["class_names"] = load_class_mapping()
@@ -100,21 +122,31 @@ async def lifespan(app: FastAPI):
         print(f"ERROR: [Lifespan] {err_msg}", flush=True)
         ml_state["load_error"] = err_msg
     else:
+        # 1. Primary approach: Build model architecture and load weights directly (100% immune to Keras initializer differences)
         try:
-            print("INFO: [Lifespan] Loading Keras model into memory...", flush=True)
-            patch_keras_initializers()
-            try:
-                ml_state["model"] = keras.models.load_model(MODEL_PATH)
-            except Exception:
-                ml_state["model"] = tf.keras.models.load_model(MODEL_PATH)
+            print("INFO: [Lifespan] Building architecture and loading weights directly...", flush=True)
+            num_classes = len(ml_state["class_names"])
+            model = build_classifier_model(num_classes=num_classes)
+            model.load_weights(MODEL_PATH)
+            ml_state["model"] = model
             ml_state["load_error"] = None
-            print("SUCCESS: [Lifespan] Model loaded successfully!", flush=True)
-        except Exception as exc:
-            import traceback
-            err_msg = f"Failed to load model: {exc}"
-            print(f"ERROR: [Lifespan] {err_msg}", flush=True)
-            traceback.print_exc()
-            ml_state["load_error"] = err_msg
+            print("SUCCESS: [Lifespan] Model architecture & weights loaded successfully!", flush=True)
+        except Exception as exc1:
+            print(f"WARN: [Lifespan] Direct weight loading error: {exc1}. Trying full load_model...", flush=True)
+            try:
+                patch_keras_initializers()
+                try:
+                    ml_state["model"] = keras.models.load_model(MODEL_PATH)
+                except Exception:
+                    ml_state["model"] = tf.keras.models.load_model(MODEL_PATH)
+                ml_state["load_error"] = None
+                print("SUCCESS: [Lifespan] Model loaded via load_model!", flush=True)
+            except Exception as exc2:
+                import traceback
+                err_msg = f"Failed to load model: {exc2}"
+                print(f"ERROR: [Lifespan] {err_msg}", flush=True)
+                traceback.print_exc()
+                ml_state["load_error"] = err_msg
 
     yield
 
@@ -174,6 +206,7 @@ async def health_check() -> dict[str, Any]:
     model_loaded = ml_state["model"] is not None
     return {
         "status": "healthy" if model_loaded else "unhealthy",
+        "app_version": "1.0.5",
         "model_loaded": model_loaded,
         "load_error": ml_state.get("load_error"),
         "model_path": MODEL_PATH.name,
