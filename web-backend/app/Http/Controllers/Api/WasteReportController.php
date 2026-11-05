@@ -298,15 +298,14 @@ class WasteReportController extends Controller
     }
 
     /**
-     * @return array{ok: bool, waste_type: string, confidence_score: float, all_probabilities: array<string, float>, message?: string}
+     * @return array{ok: bool, waste_type?: string, confidence_score?: float, all_probabilities?: array<string, float>, message?: string}
      */
     private function callMlService(UploadedFile $file): array
     {
         $mlUrl = rtrim((string) config('services.ml_service.url', 'http://127.0.0.1:8001'), '/');
 
-        // 1. Coba hubungi server FastAPI MobileNetV2 (jika aktif)
         try {
-            $response = Http::connectTimeout(2)->timeout(5)
+            $response = Http::connectTimeout(3)->timeout(10)
                 ->attach(
                     'file',
                     file_get_contents($file->getRealPath()),
@@ -314,173 +313,28 @@ class WasteReportController extends Controller
                 )
                 ->post("{$mlUrl}/predict");
 
-            if ($response->successful()) {
-                $payload = $response->json();
-                $data = $payload['data'] ?? $payload;
-
+            if (! $response->successful()) {
                 return [
-                    'ok' => true,
-                    'waste_type' => $data['waste_type'] ?? 'Plastic Waste',
-                    'confidence_score' => isset($data['confidence_score']) ? (float) $data['confidence_score'] : 0.95,
-                    'all_probabilities' => $data['all_probabilities'] ?? [],
+                    'ok' => false,
+                    'message' => 'Gagal memproses prediksi gambar pada layanan AI.',
                 ];
             }
+
+            $payload = $response->json();
+            $data = $payload['data'] ?? $payload;
+
+            return [
+                'ok' => true,
+                'waste_type' => $data['waste_type'] ?? 'Plastic Waste',
+                'confidence_score' => isset($data['confidence_score']) ? (float) $data['confidence_score'] : 0.0,
+                'all_probabilities' => $data['all_probabilities'] ?? [],
+            ];
         } catch (Throwable) {
-            // FastAPI tidak aktif, beralih ke analisis citra cerdas
+            return [
+                'ok' => false,
+                'message' => 'Layanan deteksi AI (FastAPI) sedang tidak dapat diakses. Pastikan server ML aktif di ' . $mlUrl,
+            ];
         }
-
-        // 2. Fallback: Analisis citra cerdas
-        return $this->smartAnalyzeImage($file);
-    }
-
-    /**
-     * Analisis visual berbasis spektrum warna citra, saturasi, dan heuristik cerdas (Fallback AI)
-     *
-     * @return array{ok: bool, waste_type: string, confidence_score: float, all_probabilities: array<string, float>, message: string}
-     */
-    private function smartAnalyzeImage(UploadedFile $file): array
-    {
-        $fileName = strtolower($file->getClientOriginalName() ?: '');
-
-        // 1. Deteksi berbasis nama file / kata kunci konteks
-        $isOrganic = (bool) preg_match('/(organ|daun|sayur|buah|makan|food|leaf|plant|apel|pisang|kulit|sisa|sampah_basah|taman|vegetable)/i', $fileName);
-        $isPaper = (bool) preg_match('/(paper|kertas|kardus|karton|buku|arsip|box|koran|dokumen|majalah|cardboard)/i', $fileName);
-        $isPlastic = (bool) preg_match('/(plastic|plastik|botol|bottle|kresek|gelas|cup|sedotan|bungkus|kemasan|poly|pet)/i', $fileName);
-
-        if ($isOrganic && ! $isPlastic && ! $isPaper) {
-            return $this->buildClassificationResult('Organic Waste', 0.9450, 0.0330, 0.0220);
-        }
-        if ($isPaper && ! $isOrganic && ! $isPlastic) {
-            return $this->buildClassificationResult('Paper Waste', 0.9380, 0.0380, 0.0240);
-        }
-        if ($isPlastic && ! $isOrganic && ! $isPaper) {
-            return $this->buildClassificationResult('Plastic Waste', 0.9520, 0.0280, 0.0200);
-        }
-
-        // 2. Analisis visual citra (RGB, Saturation, dan White Balance)
-        try {
-            $imagePath = $file->getRealPath();
-            $imageInfo = @getimagesize($imagePath);
-
-            if ($imageInfo && function_exists('imagecreatefromstring')) {
-                $content = file_get_contents($imagePath);
-                $img = @imagecreatefromstring($content);
-
-                if ($img) {
-                    $width = imagesx($img);
-                    $height = imagesy($img);
-
-                    $sampleCount = 0;
-                    $greenDominantPixels = 0;
-                    $lowSatBrightPixels = 0;
-                    $syntheticColorPixels = 0;
-
-                    $stepX = max(1, (int) ($width / 15));
-                    $stepY = max(1, (int) ($height / 15));
-
-                    for ($x = 0; $x < $width; $x += $stepX) {
-                        for ($y = 0; $y < $height; $y += $stepY) {
-                            $rgb = imagecolorat($img, $x, $y);
-                            $r = ($rgb >> 16) & 0xFF;
-                            $g = ($rgb >> 8) & 0xFF;
-                            $b = $rgb & 0xFF;
-
-                            $sampleCount++;
-                            $max = max($r, $g, $b);
-                            $min = min($r, $g, $b);
-                            $diff = $max - $min;
-
-                            // Karakteristik hijau tanaman / sisa sayuran (Green > Blue and Green >= Red - 15)
-                            if ($g > $b * 1.15 && $g >= ($r - 20)) {
-                                $greenDominantPixels++;
-                            }
-
-                            // Karakteristik kertas / kardus / koran (Kecerahan tinggi, saturasi rendah, atau krem/cokelat)
-                            if (($max > 150 && $diff < 40) || ($r > 130 && $g > 100 && $b < 95 && $r > $b * 1.3)) {
-                                $lowSatBrightPixels++;
-                            }
-
-                            // Karakteristik plastik sintetis (Biru terang, warna mencolok, refleksi saturasi tinggi)
-                            if ($b > $g * 1.15 || ($diff > 75 && $max > 120)) {
-                                $syntheticColorPixels++;
-                            }
-                        }
-                    }
-                    imagedestroy($img);
-
-                    if ($sampleCount > 0) {
-                        $greenRatio = $greenDominantPixels / $sampleCount;
-                        $paperRatio = $lowSatBrightPixels / $sampleCount;
-                        $syntheticRatio = $syntheticColorPixels / $sampleCount;
-
-                        if ($greenRatio > 0.18 && $greenRatio >= $paperRatio && $greenRatio >= $syntheticRatio) {
-                            $score = min(0.97, max(0.88, 0.86 + ($greenRatio * 0.15)));
-                            return $this->buildClassificationResult('Organic Waste', $score, (1 - $score) * 0.55, (1 - $score) * 0.45);
-                        }
-
-                        if ($paperRatio > 0.25 && $paperRatio >= $syntheticRatio) {
-                            $score = min(0.96, max(0.87, 0.85 + ($paperRatio * 0.14)));
-                            return $this->buildClassificationResult('Paper Waste', $score, (1 - $score) * 0.5, (1 - $score) * 0.5);
-                        }
-
-                        if ($syntheticRatio > 0.18) {
-                            $score = min(0.97, max(0.89, 0.87 + ($syntheticRatio * 0.12)));
-                            return $this->buildClassificationResult('Plastic Waste', $score, (1 - $score) * 0.55, (1 - $score) * 0.45);
-                        }
-                    }
-                }
-            }
-        } catch (Throwable) {
-            // Ignored, proceed to consistent hash distribution
-        }
-
-        // 3. Fallback konsisten berbobot seimbang (Deterministic Hash berbasis isi file gambar)
-        $hash = abs(crc32(file_get_contents($file->getRealPath()) ?: $fileName));
-        $categories = ['Organic Waste', 'Paper Waste', 'Plastic Waste'];
-        $chosenType = $categories[$hash % 3];
-
-        $primaryScore = 0.9150 + (($hash % 60) / 1000);
-        $rem = 1.0 - $primaryScore;
-        $second = round($rem * 0.6, 4);
-        $third = round($rem - $second, 4);
-
-        if ($chosenType === 'Organic Waste') {
-            return $this->buildClassificationResult('Organic Waste', $primaryScore, $second, $third);
-        } elseif ($chosenType === 'Paper Waste') {
-            return $this->buildClassificationResult('Paper Waste', $primaryScore, $third, $second);
-        } else {
-            return $this->buildClassificationResult('Plastic Waste', $primaryScore, $second, $third);
-        }
-    }
-
-    private function buildClassificationResult(string $type, float $confidence, float $other1, float $other2): array
-    {
-        $probabilities = [
-            'Organic Waste' => 0.0,
-            'Paper Waste' => 0.0,
-            'Plastic Waste' => 0.0,
-        ];
-
-        $probabilities[$type] = round($confidence, 4);
-
-        if ($type === 'Organic Waste') {
-            $probabilities['Plastic Waste'] = round($other1, 4);
-            $probabilities['Paper Waste'] = round(1.0 - $probabilities[$type] - $probabilities['Plastic Waste'], 4);
-        } elseif ($type === 'Paper Waste') {
-            $probabilities['Plastic Waste'] = round($other1, 4);
-            $probabilities['Organic Waste'] = round(1.0 - $probabilities[$type] - $probabilities['Plastic Waste'], 4);
-        } else {
-            $probabilities['Organic Waste'] = round($other1, 4);
-            $probabilities['Paper Waste'] = round(1.0 - $probabilities[$type] - $probabilities['Organic Waste'], 4);
-        }
-
-        return [
-            'ok' => true,
-            'waste_type' => $type,
-            'confidence_score' => round($confidence, 4),
-            'all_probabilities' => $probabilities,
-            'message' => 'Deteksi kategori sampah berhasil dijalankan.',
-        ];
     }
 
     private function formatReport(WasteReport $report, bool $includeUser): array

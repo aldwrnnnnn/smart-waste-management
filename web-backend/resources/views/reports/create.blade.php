@@ -326,7 +326,7 @@
         aiStatusMessage.textContent = 'Sedang mengirim gambar ke layanan inferensi MobileNetV2';
         aiStatusMessage.className = 'text-xs text-ink-muted';
 
-        const laravelProxyUrl = '{{ route("reports.detect-ai", [], false) }}';
+        const laravelProxyUrl = '{{ route("reports.detect-ai") }}';
 
         try {
             const proxyForm = new FormData();

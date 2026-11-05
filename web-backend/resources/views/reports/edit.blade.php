@@ -234,7 +234,7 @@
         aiStatusMessage.textContent = 'Mengirim gambar ke FastAPI...';
         aiStatusMessage.className = 'text-xs text-ink-muted';
 
-        const laravelProxyUrl = '{{ route("reports.detect-ai", [], false) }}';
+        const laravelProxyUrl = '{{ route("reports.detect-ai") }}';
 
         try {
             const formData = new FormData();
