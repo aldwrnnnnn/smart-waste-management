@@ -55,13 +55,3 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:20,1')
         ->name('reports.store');
 });
-
-// Route fallback untuk menyajikan file gambar storage secara aman di lingkungan cloud
-Route::get('/storage/{path}', function (string $path) {
-    $filePath = storage_path('app/public/' . $path);
-    if (! file_exists($filePath)) {
-        abort(404);
-    }
-    return response()->file($filePath);
-})->where('path', '.*')->name('storage.fallback');
-

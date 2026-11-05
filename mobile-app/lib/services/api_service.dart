@@ -76,6 +76,7 @@ class ApiService {
   Future<Map<String, String>> _buildHeaders({bool withAuth = true, bool isJson = true}) async {
     final headers = <String, String>{
       HttpHeaders.acceptHeader: 'application/json',
+      'ngrok-skip-browser-warning': 'true',
     };
     if (isJson) {
       headers[HttpHeaders.contentTypeHeader] = 'application/json; charset=UTF-8';

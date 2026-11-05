@@ -3,12 +3,10 @@ FROM python:3.10-slim
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1 \
-    TF_ENABLE_ONEDNN_OPTS=0 \
     PORT=8001
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

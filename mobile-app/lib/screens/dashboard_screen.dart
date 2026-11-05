@@ -527,6 +527,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: report.photoUrl.isNotEmpty
                                     ? Image.network(
                                         report.photoUrl,
+                                        headers: const {'ngrok-skip-browser-warning': 'true'},
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, _, _) => Container(
                                           color: AppTheme.canvasBg,

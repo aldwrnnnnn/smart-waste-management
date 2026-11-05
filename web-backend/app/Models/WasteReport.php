@@ -50,7 +50,7 @@ class WasteReport extends Model
             return $this->photo_path;
         }
 
-        return Storage::disk('public')->url($this->photo_path);
+        return asset('storage/' . ltrim($this->photo_path, '/'));
     }
 
     public function isPending(): bool

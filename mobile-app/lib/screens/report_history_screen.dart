@@ -475,6 +475,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                                                     child: report.photoUrl.isNotEmpty
                                                         ? Image.network(
                                                             report.photoUrl,
+                                                            headers: const {'ngrok-skip-browser-warning': 'true'},
                                                             fit: BoxFit.cover,
                                                             errorBuilder: (_, _, _) =>
                                                                 Container(
